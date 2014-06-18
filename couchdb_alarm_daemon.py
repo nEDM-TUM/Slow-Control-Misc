@@ -45,13 +45,27 @@ _should_stop = False
          if alarm_condition == True:
              AlarmError("error seen here", "More descriptive text about the error")
 
+
+   It is important to not that there are normal alarms, like:
+
+     AlarmWarning, AlarmError, and AlarmCritical
+
+   which are sent to indicate some level of error or warning.  Subsequent
+   raising of such alarms (before a clear or change of alarm type), which cause 
+   the alarm to be squelched.  In contrast:
+
+     AlarmEvent
+
+   is a generic event and will always be sent to the user, regardless if
+   another event happened.  It is also automatically sent if an alarm clears. 
+
 """
 class CouchDBAlarmException(Exception):
     def __init__(self, short_msg, long_msg=""):
         self.short_msg = short_msg
         self.long_msg = long_msg
 
-class AlarmRemoved(CouchDBAlarmException):
+class AlarmEvent(CouchDBAlarmException):
     """
       This is a special exception that may be raised in 'main' functions to
       forcefully remove an alarm. Otherwise, an alarm will be removed as soon
@@ -193,7 +207,7 @@ def alarm_append_alarm(doc, haslock=True):
 
         # Export exceptions, some API to the module, etc.
         am.__dict__['latest_value'] = lambda x,y=100: alarm_latest_value(_acct[doc['db']], x, y) 
-        for exc in [ AlarmWarning, AlarmError, AlarmCritical, AlarmRemoved ]:
+        for exc in [ AlarmWarning, AlarmError, AlarmCritical, AlarmEvent ]:
             am.__dict__[exc.__name__] = exc
 
         if 'emails' not in doc:
@@ -264,12 +278,15 @@ def alarm_run_check(alarm_dict):
     triggered = None
     try:
         m.main(db)
-        if 'triggered' in alarm_dict:
-            raise AlarmRemoved("Alarm Removed", "Alarm was removed")
-    except (AlarmWarning, AlarmError, AlarmCritical, AlarmRemoved) as a:
+        if 'triggered' in alarm_dict and \
+          alarm_dict['triggered'] != 'AlarmEvent':
+            raise AlarmEvent("Alarm Removed", "Alarm was removed")
+    except (AlarmWarning, AlarmError, AlarmCritical, AlarmEvent) as a:
         # Handle our alarms, writing to DB and sending emails if necessary 
         triggered = a.__class__.__name__
+        # We always send an email on AlarmEvent
         if "triggered" not in alarm_dict or \
+          triggered == "AlarmEvent" or      \
           alarm_dict["triggered"] != triggered:
             alarm_send_email(alarm=a,**alarm_dict)
             alarm_save_in_database(db, a, alarm_dict['_id'])
