@@ -173,7 +173,7 @@ def alarm_send_email(**kwargs):
     # Construct the email
     name = re.match('Alarm(.*)', msg.__class__.__name__).group(1)
     toaddrs = ",".join(set(emails))
-    fromaddr = "nEDM Alarm Service <noreply@db.nedm1>"
+    fromaddr = "nEDM Alarm Service <nedm.tum.alarms@gmail.com>"
     email_msg = MIMEText("""
 Name: 
   %(name)s
@@ -191,7 +191,7 @@ Message:
 
     # Send...
     try:
-        _email_agent["smtp"].sendmail(fromaddr, toaddrs, email_msg.as_string())
+        _email_agent["smtp"].sendmail(fromaddr, list(set(emails)), email_msg.as_string())
         if "tried" in _email_agent:
             del _email_agent["tried"]
     except smtplib.SMTPServerDisconnected as e:
