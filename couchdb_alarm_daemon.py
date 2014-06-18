@@ -194,7 +194,7 @@ Message:
     except smtplib.SMTPException:
         logging.error("Error sending mail")
 
-def alarm_append_alarm(doc, haslock=True):
+def alarm_append_alarm(doc, haslock=True, email_when_new=False):
     """
       Add an alarm to those currently being monitored
     """
@@ -216,6 +216,8 @@ def alarm_append_alarm(doc, haslock=True):
         triggered = alarm_get_recent_alarm(doc)
         if triggered is not None:
             doc['triggered'] = triggered 
+        elif email_when_new:
+            alarm_send_email(alarm=AlarmEvent("New alarm", "Alarm was created"), **doc)
 
         # Add to the alarm_dictionary. This will also replace alarms that have
         # been updated and reset their "triggered" status. 
@@ -256,7 +258,7 @@ def alarm_monitor_changes_feed(db):
             logging.info("Appending: " + l["id"])
             doc = adb.get(l["id"]).json()
             doc['db'] = db
-            alarm_append_alarm(doc, False)
+            alarm_append_alarm(doc, False, True)
     logging.info("Finishing changes feed for: %s" % db)
 
 def alarm_save_in_database(db, a, anid):
@@ -368,7 +370,7 @@ def alarm_main():
         for r in alarm_docs['rows']:
             doc = r['doc']
             doc['db'] = db
-            alarm_append_alarm(doc, True)
+            alarm_append_alarm(doc, True, False)
 
     # Start monitoring threads for new alarms
     threads = [threading.Thread(target=alarm_monitor_changes_feed, args=(db,)) 
