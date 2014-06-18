@@ -173,7 +173,7 @@ def alarm_send_email(**kwargs):
     # Construct the email
     name = re.match('Alarm(.*)', msg.__class__.__name__).group(1)
     toaddrs = ",".join(set(emails))
-    fromaddr = "nEDM Alarm Service <noreply@db.nedm1>"
+    fromaddr = "nEDM Alarm Service <mmarino@gmail.com>"
     email_msg = MIMEText("""
 Name: 
   %(name)s
