@@ -191,8 +191,8 @@ Message:
     # Send...
     try:
         _email_agent.sendmail(fromaddr, toaddrs, email_msg.as_string())
-    except smtplib.SMTPException:
-        logging.error("Error sending mail")
+    except smtplib.SMTPException as e:
+        logging.error("Error sending mail: " + repr(e))
 
 def alarm_append_alarm(doc, haslock=True, email_when_new=False):
     """
