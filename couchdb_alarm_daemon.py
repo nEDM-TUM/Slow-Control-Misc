@@ -162,6 +162,7 @@ def alarm_send_email(**kwargs):
     """
       Send an email with the alarm message
     """
+    global _email_agent
     if _email_agent is None: return
     emails = kwargs.get('emails', []) 
     emails.extend(_all_emails)
@@ -190,7 +191,17 @@ Message:
 
     # Send...
     try:
-        _email_agent.sendmail(fromaddr, toaddrs, email_msg.as_string())
+        _email_agent["smtp"].sendmail(fromaddr, toaddrs, email_msg.as_string())
+        if "tried" in _email_agent:
+            del _email_agent["tried"]
+    except smtplib.SMTPServerDisconnected as e:
+        if "tried" in _email_agent: 
+            logging.error("Email failure...")
+            del _email_agent["tried"]
+        else:
+            _email_agent["smtp"] = smtplib.SMTP(_email_agent["addr"], 25)
+            _email_agent["tried"] = True
+            alarm_send_email(**kwargs)
     except smtplib.SMTPException as e:
         logging.error("Error sending mail: " + repr(e))
 
@@ -350,7 +361,8 @@ def alarm_main():
             logging.info("Using UN/PW from config")
 
         if 'email_agent' in my_config:
-            _email_agent = smtplib.SMTP(my_config['email_agent'], 25)
+            _email_agent = dict(smtp=smtplib.SMTP(my_config['email_agent'], 25),
+                                addr=my_config['email_agent'])
             logging.info("Using email agent: " + my_config['email_agent']) 
         _all_emails = json.loads(my_config.get('emails', "[]")) 
         logging.info("Using default emails: " + ','.join(_all_emails))
