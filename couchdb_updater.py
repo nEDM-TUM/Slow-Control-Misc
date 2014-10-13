@@ -14,11 +14,24 @@ _tracked_types = ["heartbeat", "data"]
 
 # Give us some logging
 logging.basicConfig(filename='/path/to/update_indexer.log', level=logging.INFO)
+# Cookies for different type of reading...
+_cookies = {
+  "normal" : "",
+  "aggregate" : "",
+}
+_open_accts = {}
+_server_address = "http://127.0.0.1:5984"
 
 # Authentication, this only needs to be a read-only
-_acct = cloudant.Account(uri="http://127.0.0.1:5984", async=True)
-_res = _acct.login("username", "password").result()
-assert _res.status_code == 200
+def _get_authentication(atype):
+    global _open_accts
+    if atype in _open_accts: return _open_accts[atype]
+    import requests as _req
+    acct = cloudant.Account(_server_address, async=True)
+    _req.utils.add_dict_to_cookiejar(acct._session.cookies,
+      dict(AuthSession=_cookies[atype]))
+    _open_accts[atype] = acct
+    return _get_authentication(atype)
 
 def get_views_for_db(adb):
     """
@@ -26,7 +39,7 @@ def get_views_for_db(adb):
       This just grabs the initial view, since that's all we need to update all
       the views on a design doc
     """
-    db = _acct[adb]
+    db = _get_authentication("normal")[adb]
     return [(doc['id'].replace('_design/',''), doc['doc']['views'].keys()[0])
                    for doc in db.all_docs(params=dict(
                                  startkey='"_design/"',
@@ -40,7 +53,7 @@ def update_views(db_name, ddocs):
       Update the views in a database
     """
     logging.info("Update: " +  db_name)
-    adb = _acct[db_name]
+    adb = _get_authentication("normal")[db_name]
     for des_doc, view in ddocs:
         adb.design(des_doc).view(view).get(
             params=dict(limit=1,stale="update_after"))
@@ -49,11 +62,11 @@ def _post_doc_to_aggregate(doc):
     """
     post to the aggregate db and block for the result
     """
-    db = _acct["nedm%2Faggregate"]
+    db = _get_authentication("aggregate")["nedm%2Faggregate"]
     return db.design("aggregate").put("_update/aggregate/" + doc["id"], params=doc).result()
 
 def get_most_recent_docs(db_name):
-    db = _acct[db_name]
+    db = _get_authentication("normal")[db_name]
     rec_list = [(t, db.design('document_type').view('document_type').get(
                    params=dict(limit=1,reduce=False,endkey=[t], startkey=[t,{}], descending=True)).result().json()['rows'])
                  for t in _tracked_types ]
