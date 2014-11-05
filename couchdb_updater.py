@@ -10,7 +10,6 @@ import threading as _th
 _ignored_dbs = [ "nedm%2Faggregate" ]
 _handled_dbs = {}
 _max_updates = 100
-_tracked_types = ["heartbeat", "data"]
 
 # Give us some logging
 logging.basicConfig(filename='/path/to/update_indexer.log', level=logging.INFO)
@@ -69,7 +68,7 @@ def get_most_recent_docs(db_name):
     db = _get_authentication("normal")[db_name]
     rec_list = [(t, db.design('document_type').view('document_type').get(
                    params=dict(limit=1,reduce=False,endkey=[t], startkey=[t,{}], descending=True)).result().json()['rows'])
-                 for t in _tracked_types ]
+               ]
     for t, r in rec_list:
         if len(r) == 0: continue
         doc = dict(id=db_name + ":" + t, refid=r[0]['id'],
