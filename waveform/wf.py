@@ -5,7 +5,6 @@ import math
 import numpy
 #import matplotlib.pyplot as plt
 import sys
-import ROOT
 
 from waveform import *
 
@@ -58,14 +57,27 @@ def makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length
 def start():
 	 return start_params(1.2, 0.5, 100000, 1, 2, 40000)
 	
+
+def trigger():
+    print("Sending Trigger signal to device")
+    so = AgilentWaveform("waveform.1.nedm1", 5025)
+    so.cmd_and_return("*TRG")
+    print("Waveform triggered")
 	
 def startWithData(my_arr, total_volts, sampling_Freq = "100 kHz"):
     print("Send WF to device")
     so = AgilentWaveform("waveform.1.nedm1", 5025)
     
+    print("Sending")
+    so.send_wf(my_arr, "temp2", sampling_Freq, "%s Vpp" % str(total_volts), "0 V")
     setup_cmds = [
       ("*IDN?", None),# ID
       ("SYST:COMM:LAN:MAC?", None),# ID
+      ("BURS:NCYC 1", None),# ID
+      ("BURSt:MODE TRIG", None),# ID
+      ("TRIG:SOUR BUS", None),# ID
+      ("BURSt:STATe 1", None),# ID
+      ("OUTP 1", None),# ID
     ]
     for c, f in setup_cmds:
         ret = so.cmd_and_return(c)
@@ -74,8 +86,9 @@ def startWithData(my_arr, total_volts, sampling_Freq = "100 kHz"):
             if f(ret): print "Pass"
             else: 
                 print "Fail"
-    print("Sending")
-    so.send_wf(my_arr, "temp2", sampling_Freq, "%s Vpp" % str(total_volts), "0 V")
+        so.check_errors()
+        so.cmd_and_return("*WAI")
+
     print("Connection closed")
     #so.close()
     return my_arr
@@ -87,7 +100,7 @@ def start_params(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length):
     my_arr = arr[0]
     total_volts = arr[1]
     
-    samplingFreq = int(SamplingFreq / 1000) + " kHz"
+    samplingFreq = "{} kHz".format(int(Sampling_Freq) / 1000)
     startWithData(my_arr, total_volts, samplingFreq)
     
     
@@ -95,6 +108,7 @@ def start_params(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length):
     #########################
     # DRAWING THE PLOT
     #########################
+    #import ROOT
     #dbl = ROOT.TDoubleWaveform(total_volts*my_arr, len(my_arr))
     #dbl.SetSamplingFreq(1e-4) # 100 kHz
     #wfft = ROOT.TWaveformFT()

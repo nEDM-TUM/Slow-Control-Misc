@@ -24,14 +24,15 @@ from autobahn.twisted.websocket import WebSocketServerProtocol, \
 ##########
 # DataBase
 ##########
-dbURL = "http://127.0.0.1:5984"
-user = ""
-pwd = ""
+dbURL = "http://raid.nedm1"
+user = "Rafael"
+pwd = "myPwdRS7"
 
 ###########
 # Server
 ###########
-wsuri = "ws://localhost:9000"
+wsport = 9100
+wsuri = "ws://localhost:{}".format(wsport)
 
 
 
@@ -50,7 +51,7 @@ class WSServerProtocol(WebSocketServerProtocol):
     		return
     		
     		
-    	print("Text message received: {}".format(payload))
+    	#print("Text message received: {}".format(payload))
     	hdr = json.loads(payload)
     	
     	cmd = hdr[0]
@@ -89,7 +90,10 @@ class WSServerProtocol(WebSocketServerProtocol):
     			self.sendMessage(self.buildHeader(["Sending Success"]), False)
     		else:
     			self.sendMessage(self.buildHeader(["Sending Failure"]), False) 
-    
+	if(cmd == "trigger WF"):
+		print cmd    
+		wf.trigger()
+
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: {0}".format(reason))
@@ -112,7 +116,8 @@ class WSServerProtocol(WebSocketServerProtocol):
     		print("Data saved to DB")
     		return True
     	except Exception as e:
-    		print(e)
+    	        import traceback	
+                traceback.print_exc()
     		return False
     
     def load_data(self, name):
@@ -144,16 +149,19 @@ class WSServerProtocol(WebSocketServerProtocol):
     	
     	self.sendDataToDraw(data, samplingFreq)
     
-    def send_data_to_wfGenerator(self, b0, f_burst_t, measuring_t, s, sampling_f, l):
+    def send_data_to_wfGenerator(self, b0, f_burst_t, sampling_f, s, measuring_t, l):
     	try:
     		#print b0, f_burst_t, sampling_f, s, measuring_t, l
-    		data = wf.startWFParams(float(b0), float(f_burst_t), float(measuring_t), float(s), int(sampling_f), int(l))
-    		self.sendDataToDraw(data, int(sampling_f))
+    		data = wf.start_params(float(b0), float(f_burst_t), int(sampling_f), float(s), float(measuring_t), int(l))
+    		#print "test"
+    		#self.sendDataToDraw(data, int(sampling_f))
+    		
     		return True
     	except ValueError as e:
     		print(e)
     	except:
-    		print(sys.exc_info()[0])
+    	        import traceback	
+                traceback.print_exc()
     	return False
     
     def getDB(self):
@@ -185,7 +193,7 @@ class WSServerProtocol(WebSocketServerProtocol):
     		samplingFreq = 100000
     		print("SamplingFrequency not saved. Set to: {}".format(samplingFreq))
     	
-    	samplingFreq = str(int(samplingFreq / 1000)) + "kHz"
+    	samplingFreq = str(int(samplingFreq / 1000)) + " kHz"
     	
     	try:
     		wf.startWithData(data, totalVolts, samplingFreq)
@@ -194,7 +202,8 @@ class WSServerProtocol(WebSocketServerProtocol):
     	except ValueError as e:
     		print (e)
     	except:
-    		print(sys.exc_info()[0])
+    	        import traceback	
+                traceback.print_exc()
     	return False
     
     def deleteDoc(self, name):
@@ -213,7 +222,7 @@ if __name__ == '__main__':
     factory.protocol = WSServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 
-    reactor.listenTCP(9000, factory)
+    reactor.listenTCP(wsport, factory)
     reactor.run()
             
 

@@ -5,7 +5,6 @@ import math
 import numpy
 #import matplotlib.pyplot as plt
 import sys
-import ROOT
 
 class SocketDaptisconnect(Exception):
     pass
@@ -65,7 +64,8 @@ class AgilentWaveform(SocketObj):
             astr = "apply:arbitrary " + str(sample_rate)
             self.cmd_and_return(astr, False)
             self.check_errors("Apply arbitrary")
-        
+        self.cmd_and_return("outp off")
+ 
         d = str(o.data)
         alen = str(len(d))
         send_str = "data:arbitrary %s,#" % (aname) 
@@ -82,6 +82,7 @@ class AgilentWaveform(SocketObj):
         if offset is not None:
             self.cmd_and_return("sour:volt:offs " + str(offset))
             self.check_errors("Offset")
+
 
         self.cmd_and_return("*WAI")
         return
