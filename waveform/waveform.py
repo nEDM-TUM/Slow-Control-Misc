@@ -6,7 +6,7 @@ import numpy
 #import matplotlib.pyplot as plt
 import sys
 
-class SocketDaptisconnect(Exception):
+class SocketDisconnect(Exception):
     pass
  
 class SocketObj:
