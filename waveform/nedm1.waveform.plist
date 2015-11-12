@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>nedm1.waveform</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+           <key>DB_USER_NAME</key>
+           <string>waveform_writer</string>
+           <key>DB_PASSWORD</key>
+           <string>****</string>
+           <key>DB_NAME</key>
+           <string>nedm%2Fwaveform</string>
+           <key>DB_URL</key>
+           <string>http://raid.nedm1</string>
+           <key>SERVER_PORT</key>
+           <string>9100</string>
+    </dict>
+    <key>ProgramArguments</key>
+    <array>
+           <string>/usr/bin/python</string>
+           <string>run_waveform_server.py</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/nedmdaq/software/Slow-Control-Misc/waveform</string>
+    <key>StandardOutPath</key>
+    <string>/Users/nedmdaq/Library/Logs/waveform.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/nedmdaq/Library/Logs/waveform.log</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>
