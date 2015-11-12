@@ -11,7 +11,6 @@ __settings_map = {
 def _ret_value(v):
     def inner(*args):
         import os
-        print v, os.environ.get(v, "")
         return os.environ.get(v, "")
     return inner
 
