@@ -1,12 +1,5 @@
-import socket
-#import pynedm
-import time
 import math
-import numpy
-#import matplotlib.pyplot as plt
-import sys
-
-from waveform import *
+from .waveform import *
 
     
 def makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length):

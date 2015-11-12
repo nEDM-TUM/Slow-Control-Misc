@@ -1,10 +1,6 @@
 import socket
-#import pynedm
-import time
 import math
 import numpy
-#import matplotlib.pyplot as plt
-import sys
 
 class SocketDisconnect(Exception):
     pass
