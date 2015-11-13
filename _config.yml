@@ -2,3 +2,6 @@ fierlingerwiki: https://fierlinger.wiki.tum.de/Administration+Page
 baseurl: /Slow-Control-Misc
 usertitle: Miscellaneous slow control 
 highlighter: pygments
+collections:
+  subsystems:
+    output: true
