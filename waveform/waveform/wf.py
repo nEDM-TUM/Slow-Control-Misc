@@ -52,20 +52,13 @@ def makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Burst_Width, Measuring_Time
                             first_burst_time = f_burst_time, sampling_freq = sampling_freq, 
                             burst_freq=f, phase=aphase, length=length, ncyc=ncyc)        ###an_arr = make_array(burst_width=sig, measuring_time=measuring_time, first_burst_time = f_burst_time, sampling_freq = sampling_freq, burst_freq=f, phase=aphase, length=length, ncyc=ncyc)
         
-        '''
-        X=range(len(an_arr))
-        plt.plot(X, an_arr)
-        plt.show()
-        '''
-        
-        
-        #angle=(math.pi*0.5)                                                                          ###
-        amp=(1./gam)*angle/(math.sqrt(2*math.pi)*burst_width/(2.35482))#sigma=burst_width/(2*sqrt(2*ln(2)))                          ###amp = (1./gam)/(2*math.sqrt(2*math.pi)*sig) # (muT)
+ 
+       
+        amp=(1./(gam*2*math.pi))*angle/(math.sqrt(2*math.pi)*burst_width/(2.35482))#sigma=burst_width/(2*sqrt(2*ln(2)))                          ###amp = (1./gam)/(2*math.sqrt(2*math.pi)*sig) # (muT)
         # Theta = B_1 * Tau * g
         
         
         amp *= volt_per_muT*2                  # Factor 2: B_x = 2* B_1
-        #print("Amp.:", amp)
         if my_arr is not None:
             my_arr += amp*an_arr
         else:
@@ -78,13 +71,6 @@ def makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Burst_Width, Measuring_Time
     my_arr /= total_volts_vpp/2                                           ###my_arr /= total_volts
     
     
-    
-    
-        
-    """print "Max my_arr", max(my_arr)
-    print "Min my_arr", min(my_arr)
-    print "total_volts_vpp", total_volts_vpp
-    print "total_volts-min--max", total_volts-(max(my_arr)-min(my_arr))"""
     
     X=range(len(my_arr))
     plt.plot(X, my_arr)
