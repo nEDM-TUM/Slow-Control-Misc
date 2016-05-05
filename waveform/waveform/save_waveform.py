@@ -1,6 +1,3 @@
-# save_waveform.py
-
-
 import pynedm
 import json
 import numpy
