@@ -1,17 +1,19 @@
 import math
-from .waveform import *
+#from .cwaveform import *
+import numpy
+import matplotlib.pyplot as plt
 
     
-def makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length):
+def makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Burst_Width, Measuring_Time, Length, NCyc, Angle, Cell_Type):
 	 
     b0_field_strength = b0 # muT
 
-    gamma_xe = 11.77717 # 1/(muT*s)
-    gamma_he = 32.4341  # 1/(muT*s)
+    gamma_xe = 11.77717 # (10^6 rad*s^-1*T^-1)/(2Pi)=MHz/T
+    gamma_he = 32.4341  # 
     
-    volt_per_muT = 2*17.29 # V_pp / muT
+    volt_per_muT = 17.29                                 ###volt_per_muT = 2*17.29 # V_pp / muT (Rafael)
     
-    he_freq = gamma_he*b0_field_strength 
+    he_freq = gamma_he*b0_field_strength #[Hz]
     xe_freq = gamma_xe*b0_field_strength 
 
         
@@ -21,34 +23,82 @@ def makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length
     my_arr = None
     i = 0
     list_of_wfs = []
-    sig = Sig # s
+    burst_width=Burst_Width  ###sig = Sig # s
     total_volts = 0
     measuring_time = Measuring_Time
     length=Length
     
-    for f,gam in [(he_freq, gamma_he), (xe_freq, gamma_xe)]:
+    
+    ncyc = NCyc
+    angle = Angle
+    angle = math.pi*2.*angle/360
+    
+    
+    # Choose cell type (He/Xe/HeXe)
+    cell_type = Cell_Type
+                                                                        
+    if cell_type == 1:
+        cell = [(he_freq, gamma_he)]
+    elif cell_type == 2:
+        cell = [(xe_freq, gamma_xe)]
+    elif cell_type == 3:
+        cell = [(he_freq, gamma_he), (xe_freq, gamma_xe)]
+        
+    for f, gam in cell:     ###for f, gam in [(he_freq, gamma_he), (xe_freq, gamma_xe)]:
         n = int(f*f_burst_time)
         aphase = math.pi/2 - (f*f_burst_time - n)*2*math.pi 
         assert( aphase < 2*math.pi )
-        an_arr = make_array(burst_width=sig, measuring_time=measuring_time, 
+        an_arr = make_array(burst_width=burst_width, measuring_time=measuring_time, 
                             first_burst_time = f_burst_time, sampling_freq = sampling_freq, 
-                            burst_freq=f, phase=aphase, length=length)
+                            burst_freq=f, phase=aphase, length=length, ncyc=ncyc)        ###an_arr = make_array(burst_width=sig, measuring_time=measuring_time, first_burst_time = f_burst_time, sampling_freq = sampling_freq, burst_freq=f, phase=aphase, length=length, ncyc=ncyc)
         
-        amp = (1./gam)/(2*math.sqrt(2*math.pi)*sig) # (muT)
-        amp *= volt_per_muT
-        print("Amp.:", amp)
+        '''
+        X=range(len(an_arr))
+        plt.plot(X, an_arr)
+        plt.show()
+        '''
+        
+        
+        #angle=(math.pi*0.5)                                                                          ###
+        amp=(1./gam)*angle/(math.sqrt(2*math.pi)*burst_width/(2.35482))#sigma=burst_width/(2*sqrt(2*ln(2)))                          ###amp = (1./gam)/(2*math.sqrt(2*math.pi)*sig) # (muT)
+        # Theta = B_1 * Tau * g
+        
+        
+        amp *= volt_per_muT*2                  # Factor 2: B_x = 2* B_1
+        #print("Amp.:", amp)
         if my_arr is not None:
             my_arr += amp*an_arr
         else:
             my_arr = amp*an_arr
-        total_volts += amp 
-    my_arr /= total_volts
+                                                                                            ###total_volts += amp 
+    if max(my_arr) > (-min(my_arr)):
+        total_volts_vpp = max(my_arr)*2
+    else:
+        total_volts_vpp = -min(my_arr)*2                           
+    my_arr /= total_volts_vpp/2                                           ###my_arr /= total_volts
     
-    return [my_arr,total_volts]
+    
+    
+    
+        
+    """print "Max my_arr", max(my_arr)
+    print "Min my_arr", min(my_arr)
+    print "total_volts_vpp", total_volts_vpp
+    print "total_volts-min--max", total_volts-(max(my_arr)-min(my_arr))"""
+    
+    X=range(len(my_arr))
+    plt.plot(X, my_arr)
+    plt.show()
+
+    
+    
+    
+    return [my_arr, total_volts_vpp]                               ###return [my_arr,total_volts]
     #return an_arr
     
 def start():
-	 return start_params(1.2, 0.5, 100000, 1, 2, 40000)
+    #b0, F_Burst_Time,Sampling_Freq, Burst_Width, Measuring_Time, Length, NCyc, Angle, He/Xe/HeXe (1, 2, 3)
+	 return start_params(1.2, 2.0, 1000, 0.3, 2, 72600, 36, 20, 1)
 	
 
 def trigger():
@@ -57,12 +107,16 @@ def trigger():
     so.cmd_and_return("*TRG")
     print("Waveform triggered")
 	
-def startWithData(my_arr, total_volts, sampling_Freq = "100 kHz"):
+def startWithData(my_arr, total_volts_vpp, sampling_Freq = "100 kHz"):    ###def startWithData(my_arr, total_volts, sampling_Freq = "100 kHz"):
     print("Send WF to device")
+    
+   
+    #### Abbruch da eine Verbinding nicht möglich ist (M)
+    ###return                                                    ####
     so = AgilentWaveform("waveform.1.nedm1", 5025)
     
     print("Sending")
-    so.send_wf(my_arr, "temp2", sampling_Freq, "%s Vpp" % str(total_volts), "0 V")
+    so.send_wf(my_arr, "temp2", sampling_Freq, "%s Vpp" % str(total_volts_vpp), "0 V")   ###so.send_wf(my_arr, "temp2", sampling_Freq, "%s Vpp" % str(total_volts), "0 V")
     setup_cmds = [
       ("*IDN?", None),# ID
       ("SYST:COMM:LAN:MAC?", None),# ID
@@ -87,14 +141,14 @@ def startWithData(my_arr, total_volts, sampling_Freq = "100 kHz"):
     return my_arr
 	
 	
-def start_params(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length):
-    print b0, F_Burst_Time,Sampling_Freq, Sig, Measuring_Time, Length
-    arr = makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length)
+def start_params(b0, F_Burst_Time, Sampling_Freq, Burst_Width, Measuring_Time, Length, NCyc, Angle, Cell_Type):  ###def start_params(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length, NCyc, Angle): 
+    print b0, F_Burst_Time,Sampling_Freq, Burst_Width, Measuring_Time, Length, NCyc, Angle, Cell_Type    ###print b0, F_Burst_Time,Sampling_Freq, Sig, Measuring_Time, Length, NCyc, Angle
+    arr = makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Burst_Width, Measuring_Time, Length, NCyc, Angle, Cell_Type)   ###arr = makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length, NCyc, Angle)
     my_arr = arr[0]
-    total_volts = arr[1]
+    total_volts_vpp = arr[1]                                    ###total_volts = arr[1]
     
     samplingFreq = "{} kHz".format(int(Sampling_Freq) / 1000)
-    startWithData(my_arr, total_volts, samplingFreq)
+    startWithData(my_arr, total_volts_vpp, samplingFreq)                  ###startWithData(my_arr, total_volts, samplingFreq)
     
     
     #raw_input("E")
@@ -126,5 +180,3 @@ def start_params(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length):
     
 if __name__ == "__main__":
 	start()
-
-
