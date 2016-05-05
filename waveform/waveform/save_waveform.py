@@ -1,3 +1,6 @@
+# save_waveform.py
+
+
 import pynedm
 import json
 import numpy
@@ -112,10 +115,10 @@ class WaveformDB:
         return False
     
         
-    def saveWF(self, name, b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length):
+    def saveWF(self, name, b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length, NCyc, Angle, Cell_Type):
         if(self.existName(name)):
             raise Exception("Document not saved!: Document name already exists")
-        nparray = makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length)
+        nparray = makeArrayToSend(b0, F_Burst_Time, Sampling_Freq, Sig, Measuring_Time, Length, NCyc, Angle, Cell_Type)
         totalVolts = nparray[1]
         nparray = nparray[0]
 
