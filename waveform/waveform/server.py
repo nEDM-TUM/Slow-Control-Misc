@@ -51,8 +51,8 @@ class WSServerProtocol(WebSocketServerProtocol):
     		print cmd, hdr[1], hdr[2]
     		name = hdr[1]
     		hdr = hdr[2]
-    		success = self.save_data(name, hdr[0], hdr[1], hdr[2], hdr[3], hdr[4], hdr[5])
-    		if(success):
+    		success = self.save_data(name, hdr[0], hdr[1], hdr[2], hdr[3], hdr[4], hdr[5], hdr[6], hdr[7], hdr[8])
+            if(success):
     			self.updateList()
     			self.sendMessage(self.buildHeader(["Draw", name]), False)
     		else:
@@ -60,7 +60,7 @@ class WSServerProtocol(WebSocketServerProtocol):
     	if(cmd == "send CustomWF"):
     		print cmd, hdr[1]
     		hdr = hdr[1]
-    		success = self.send_data_to_wfGenerator(hdr[0], hdr[1], hdr[2], hdr[3], hdr[4], hdr[5])
+    		success = self.send_data_to_wfGenerator(hdr[0], hdr[1], hdr[2], hdr[3], hdr[4], hdr[5], hdr[6], hdr[7], hdr[8])
     		if(success):
     			self.sendMessage(self.buildHeader(["Sending Success"]), False)
     		else:
@@ -83,10 +83,10 @@ class WSServerProtocol(WebSocketServerProtocol):
     	else:
     		return str(numpy.int32(len(header))) + ":" + header
 
-    def save_data(self, name, b0, f_burst_t, sampling_f, s, measuring_t, l):
+    def save_data(self, name, b0, f_burst_t, sampling_f, s, measuring_t, l, ncyc, angle, cell_type):
     	db = self.getDB()
     	try:
-    		data = db.saveWF(name, float(b0), float(f_burst_t), int(sampling_f), float(s), float(measuring_t), int(l))
+    		data = db.saveWF(name, float(b0), float(f_burst_t), int(sampling_f), float(s), float(measuring_t), int(l), int(ncyc), float(angle), int(cell_type))
     		self.sendDataToDraw(data, int(sampling_f))
     		print("Data saved to DB")
     		return True
@@ -107,8 +107,9 @@ class WSServerProtocol(WebSocketServerProtocol):
     		samplingFreq = 100000
     		print("SamplingFrequency not saved. Set to: {}".format(samplingFreq))
 
-    	#send less data if more than 1e6 data points
-    	if(len(data) > 1000000):
+    	#send less data if more than 1e6 data points                                                                            #why?
+    	'''
+        if(len(data) > 1000000):
     		divisor = int(len(data) / 1000000) + 1
     		print("Data reduction, divisor: ", divisor)
     		newLen = int(len(data) / divisor)
@@ -120,14 +121,14 @@ class WSServerProtocol(WebSocketServerProtocol):
 
     		print("Data reduction from: ", len(data), " to ", newLen)
     		data = newData
-
+    '''
 
     	self.sendDataToDraw(data, samplingFreq)
 
-    def send_data_to_wfGenerator(self, b0, f_burst_t, sampling_f, s, measuring_t, l):
+    def send_data_to_wfGenerator(self, b0, f_burst_t, sampling_f, s, measuring_t, l, ncyc, angle, cell_type):
     	try:
     		#print b0, f_burst_t, sampling_f, s, measuring_t, l
-    		data = wf.start_params(float(b0), float(f_burst_t), int(sampling_f), float(s), float(measuring_t), int(l))
+    		data = wf.start_params(float(b0), float(f_burst_t), int(sampling_f), float(s), float(measuring_t), int(l), int(ncyc), float(angle), int(cell_type))
     		#print "test"
     		#self.sendDataToDraw(data, int(sampling_f))
 
@@ -206,5 +207,4 @@ def run_server():
 
     reactor.listenTCP(_wsport, factory)
     reactor.run()
-
 
