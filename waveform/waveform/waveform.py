@@ -105,16 +105,6 @@ def get_gauss_function(alen, width, mean, sampling_freq):
     #Plot Gauss
     
     
-    
-    
-    
-    '''X=range(alen)
-    plt.plot(X,some)
-    plt.show()'''
-    
-    
-    
-    
     return some
  
 
