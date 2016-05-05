@@ -1,6 +1,7 @@
 import socket
 import math
 import numpy
+import matplotlib.pyplot as plt
 
 class SocketDisconnect(Exception):
     pass
@@ -98,9 +99,22 @@ def get_gauss_function(alen, width, mean, sampling_freq):
     gauss *= (1./sampling_freq)
     gauss -= mean
     gauss *= gauss
-    sigma_sq = 0.5*(width/2.3548)**2 
-    gauss *= (1./sigma_sq)
+    sigma_sq = (width/2.35482)**2   #standard deviation squared       ###sigma_sq = 0.5*(width/2.3548)**2 
+    gauss *= 0.5/sigma_sq                                                                            ###gauss *= (1./sigma_sq)
     some = numpy.exp(-gauss)
+    #Plot Gauss
+    
+    
+    
+    
+    
+    '''X=range(alen)
+    plt.plot(X,some)
+    plt.show()'''
+    
+    
+    
+    
     return some
  
 
@@ -116,6 +130,7 @@ def make_array(**kwargs):
     measuring_time = kwargs.get("measuring_time", 100)
     alen = kwargs.get("length", 16000000)
     ret_windows = kwargs.get("ret_windows", False)
+    ncyc=kwargs.get("ncyc", 10)
     
     # each point has a time of 1/sampling_freqency
     # this means, we should have samp_point*burst_freq*2*pi/(sampling_frequency)
@@ -127,8 +142,7 @@ def make_array(**kwargs):
         sine_wave = numpy.sin(x*coef)
     else:
         sine_wave = numpy.sin(x*coef + numpy.array([phase]*len(x), dtype=numpy.float64))
-
-    gauss_1 = get_gauss_function(alen, burst_width, first_burst_time, sampling_freq)
+    '''gauss_1 = get_gauss_function(alen, burst_width, first_burst_time, sampling_freq)
     if measuring_time == 0:
         if not ret_windows:
             return gauss_1*sine_wave
@@ -139,7 +153,16 @@ def make_array(**kwargs):
 
     # Now we must window it
     if not ret_windows:
+        X=range(alen)
+        plt.plot(X,sine_wave*(gauss_1+gauss_2))
+        plt.show()
         return sine_wave*(gauss_1+gauss_2)
     else:
-        return sine_wave, gauss_1+gauss_2
-
+        return sine_wave, gauss_1+gauss_2 '''
+    signal = 0
+    for i in range(ncyc):
+        gauss=get_gauss_function(alen, burst_width, first_burst_time+i*measuring_time, sampling_freq)
+        if measuring_time == 0:
+            return sine_wave, gauss
+        signal += sine_wave*gauss
+    return signal
